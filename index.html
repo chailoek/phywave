@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+	<head>        
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }          
+            .label {
+				color: #FFF;
+				font-family: sans-serif;
+				padding: 2px;
+				background: rgba( 0, 0, 0, .6 );
+			}
+		</style>
+        <script nomodule defer src="js/lib/katex.js" ></script>
+        <link rel="stylesheet" href="js/lib/katex.css">
+	</head>
+	<body>        
+		<!-- <script src="js/three.js"></script> -->
+        <!-- <div id="math" ></div> -->
+        <script type="importmap">
+			{
+				"imports": {
+					"three": "./js/lib/three.module.js",
+					"three/addons/": "./js/lib/jsm/",
+                    "katex": "./js/lib/katex.mjs"
+				}
+			}
+		</script>
+        <script type="x-shader/x-vertex" id="vertexshader">
+
+            uniform float amplitude;
+            
+            attribute vec3 displacement;
+            attribute vec3 customColor;
+    
+            varying vec3 vColor;
+    
+            void main() {
+    
+                vec3 newPosition = position + amplitude * displacement;
+    
+                vColor = customColor;
+    
+                gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
+    
+            }
+    
+        </script>
+		<script type="module">
+            import * as THREE from 'three';
+            import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+            import katex from 'katex';            
+            
+            let camera, scene, renderer, labelRenderer;
+			scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 500 );
+            camera.position.set( 0, 0, 100 );
+            camera.lookAt( 0, 0, 0 );
+            camera.layers.enableAll();
+            camera.layers.toggle( 1 );
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio( window.devicePixelRatio );
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement );
+
+            labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize( window.innerWidth, window.innerHeight );
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0px';
+            document.body.appendChild( labelRenderer.domElement );
+            
+            const material = new THREE.LineBasicMaterial( { color: 0x00ff00 } );
+            const points = [];
+            points.push( new THREE.Vector3( - 10, 0, 0 ) );
+            points.push( new THREE.Vector3( 0, 10, 0 ) );
+            points.push( new THREE.Vector3( 10, 0, 0 ) );
+
+            const geometry = new THREE.BufferGeometry().setFromPoints( points );
+            const line = new THREE.Line( geometry, material );
+            line.layers.enableAll();
+
+            const lineDiv = document.createElement( 'div' );
+            lineDiv.className = 'label';
+
+            let a = 1
+            katex.render(`F = ma \\\\ a = ${a} \\\\ E=mc^2`, lineDiv, {
+                throwOnError: false
+            });
+            // earthDiv.textContent = "โลก";            
+            lineDiv.style.marginTop = '-1em';
+            const lineLabel = new CSS2DObject( lineDiv );
+            lineLabel.position.set( -30, 0, 0 );
+            line.add( lineLabel );
+            lineLabel.layers.set( 0 );
+
+            scene.add( line );
+            
+            renderer.render( scene, camera );
+            labelRenderer.render( scene, camera );
+
+            function animate() {
+                requestAnimationFrame( animate );
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+                renderer.render( scene, camera );
+                labelRenderer.render( scene, camera );
+            }
+            // animate();
+
+            function onWindowResize() {
+
+                let w = window.innerWidth;
+                let h = window.innerHeight;
+
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize( w, h );
+                labelRenderer.setSize( w, h );
+
+                renderer.render( scene, camera );
+                labelRenderer.render( scene, camera );
+
+            }
+
+            window.addEventListener( 'resize', onWindowResize );
+
+
+		</script>
+	</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }          
+            .label {
+				color: #FFF;
+				font-family: sans-serif;
+				padding: 2px;
+				background: rgba( 0, 0, 0, .6 );
+			}
+		</style>
+        <script nomodule defer src="js/lib/katex.js" ></script>
+        <link rel="stylesheet" href="js/lib/katex.css">
+	</head>
+	<body>        				
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./js/lib/three.module.js",
+					"three/addons/": "./js/lib/jsm/",
+                    "katex": "./js/lib/katex.mjs"
+				}
+			}
+		</script>
+
+		<script type="module" src="js/00.js"> </script>
+
+</body>
+
+</html>
