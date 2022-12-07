@@ -2,10 +2,15 @@ import * as THREE from 'three';
 import { Object3D } from 'three';
 import Stats from 'three/addons/libs/stats.module.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+
 import GUI from './lib/lil-gui-0.17.js'
 import katex from 'katex'; 
 
-let sin = math.sin, cos = math.cos, pi = math.pi, sqrt = math.sqrt
+let sin = math.sin, cos = math.cos, pi = math.pi
+let sqrt = math.sqrt, atan = math.atan, round = math.round
 let container, stats, clock;
 let camera, scene, renderer, labelRenderer;
 
@@ -14,17 +19,21 @@ let sprModelA, massA
 let sprModelB, massB
 let mass_springA, mass_springB
 const paramsA = {
-    y0: 1.0,
-    v0: 1.0,
+    y0: 0,
+    v0: 0,
     k: 5.0,
     m: 1.0,
 }
 const paramsB = {
-    y0: 1.0,
-    v0: 1.0,
+    y0: 0,
+    v0: 0,
     k: 5.0,
     m: 1.0,
 }
+let omegaA = sqrt(paramsA.k/paramsA.m)
+let omegaB = sqrt(paramsB.k/paramsB.m)
+let ampA , ampB
+let phiA, phiB 
 
 class HSpring {
     constructor(l, pitch, scaleY, ctrlPos, color) {
@@ -106,7 +115,7 @@ class HSpring {
 class VSpring {
     constructor(l, pitch, scaleX, ctrlPos, color) {
         this.l = l // cm
-        let maxVert = math.round(l/pitch)
+        let maxVert = round(l/pitch) + 1
         let springVert = []
         var springPos = new Float32Array(maxVert * 3);
         switch (ctrlPos) {
@@ -179,6 +188,21 @@ class VSpring {
 
     }
 }
+function setInitilaValue(y0, v0, omega) {
+    let m = [[1, 0], [0, omega]]
+    let AB = math.lusolve(m, [y0, v0]) 
+    let A = round(AB[0][0], 3), B = round(AB[1][0], 3)
+    let phi = atan(B/A)
+    let amp 
+    if (A == 0 && B == 0) return [0, 0]
+    if (A == 0) {amp = B/sin(phi); return [amp, phi];}
+    if (B == 0) {amp = A/cos(phi); return [amp, phi];}
+    amp = A/cos(phi)         
+    return [amp, phi];
+}
+
+[ampA, phiA] = setInitilaValue(paramsA.y0, paramsA.v0, omegaA);
+[ampB, phiB] = setInitilaValue(paramsB.y0, paramsB.v0, omegaB);
 
 init();
 animate();
@@ -186,6 +210,7 @@ animate();
 stats.update();
 function init() {
     const gui = new GUI()
+
     const folderA = gui.addFolder( 'A' );
     const folderB = gui.addFolder( 'B' );
    
@@ -194,10 +219,28 @@ function init() {
     paramsALabel.v0 = katex.renderToString("v_{0} \\quad (m/s)", { throwOnError: false}); 
     paramsALabel.k = katex.renderToString("k \\quad (N/m)", { throwOnError: false}); 
     paramsALabel.m = katex.renderToString("m \\quad (kg)", { throwOnError: false}); 
-    folderA.add( paramsA, 'y0' ).name(paramsALabel.y0); 	
-    folderA.add( paramsA, 'v0' ).name(paramsALabel.v0); 	
-    folderA.add( paramsA, 'k' ).name(paramsALabel.k); 	
-    folderA.add( paramsA, 'm' ).name(paramsALabel.m); 	
+
+    folderA.add( paramsA, 'y0' )
+        .name(paramsALabel.y0)
+        .onChange( function( y0 ) {
+            [ampA, phiA] = setInitilaValue(paramsA.y0, paramsA.v0, omegaA);            
+        } )
+    folderA.add( paramsA, 'v0' )
+        .name(paramsALabel.v0)
+        .onChange( function( v0 ) {
+            [ampA, phiA] = setInitilaValue(paramsA.y0, paramsA.v0, omegaA);
+        } ); 	
+    folderA.add( paramsA, 'k' )
+        .name(paramsALabel.k)
+        .onChange( function( v0 ) {
+            omegaA = sqrt(paramsA.k/paramsA.m);
+        } ); 	
+    folderA.add( paramsA, 'm' )
+        .name(paramsALabel.m)
+        .onChange( function( v0 ) {
+            omegaA = sqrt(paramsA.k/paramsA.m);
+        } );  	
+    
     
     
     let paramsBLabel = {}
@@ -205,14 +248,28 @@ function init() {
     paramsBLabel.v0 = katex.renderToString("v_{0} \\quad (m/s)", { throwOnError: false}); 
     paramsBLabel.k = katex.renderToString("k \\quad (N/m)", { throwOnError: false}); 
     paramsBLabel.m = katex.renderToString("m \\quad (kg)", { throwOnError: false}); 
-    folderB.add( paramsB, 'y0' ).name(paramsBLabel.y0); 	
-    folderB.add( paramsB, 'v0' ).name(paramsBLabel.v0); 	
-    folderB.add( paramsB, 'k' ).name(paramsBLabel.k); 	
-    folderB.add( paramsB, 'm' ).name(paramsBLabel.m); 
+    folderB.add( paramsB, 'y0' )
+        .name(paramsBLabel.y0)
+        .onChange( function( y0 ) {
+            [ampB, phiB] = setInitilaValue(paramsB.y0, paramsB.v0, omegaB);            
+        } ); 	
+    folderB.add( paramsB, 'v0' )
+        .name(paramsBLabel.v0)
+        .onChange( function( y0 ) {
+            [ampB, phiB] = setInitilaValue(paramsB.y0, paramsB.v0, omegaB);            
+        } ); 	
+    folderB.add( paramsB, 'k' )
+        .name(paramsBLabel.k)
+        .onChange( function( v0 ) {
+            omegaB = sqrt(paramsB.k/paramsB.m);
+        } );  	
+    folderB.add( paramsB, 'm' )
+        .name(paramsBLabel.m)
+        .onChange( function( v0 ) {
+            omegaB = sqrt(paramsB.k/paramsB.m);
+        } ); 
+
     
-
-    // gui.add( paramsA, 'myFunction' ); 	// button
-
     container = document.getElementById( 'container' );
     clock = new THREE.Clock();
 
@@ -239,6 +296,21 @@ function init() {
     labelRenderer.domElement.style.top = '0px';
     container.appendChild( labelRenderer.domElement ); 
     
+    let lineVerts = new Float32Array( [
+        -2.0, 0.0,  0.0,
+        1.0, 0.0,  0.0
+    ] );
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute( 'position', new THREE.BufferAttribute( lineVerts, 3) );
+    
+    var material = new THREE.LineBasicMaterial({
+        color: 0xf63954,  
+    });
+    const eqliLine = new THREE.Line(geo,material)
+    const fixedLine = new THREE.Line(geo,material)
+    fixedLine.translateY(4)
+    scene.add(eqliLine, fixedLine)
+
     const circleGeo = new THREE.CircleGeometry( 0.25, 32);
     const mat = new THREE.MeshBasicMaterial( { color: 0x000000 } );
 
@@ -254,7 +326,7 @@ function init() {
     const labelA = new CSS2DObject( divA );   
 
     mass_springA.add(sprModelA.spring, massA)
-    mass_springA.translateY(5)
+    mass_springA.translateY(4)
     mass_springA.translateX(-1)    
     labelA.position.set(0,0,0)
     mass_springA.add(labelA)    
@@ -271,10 +343,12 @@ function init() {
     const labelB = new CSS2DObject( divB );   
 
     mass_springB.add(sprModelB.spring, massB)
-    mass_springB.translateY(5)
+    mass_springB.translateY(4)
     mass_springB.translateX(0)
     mass_springB.add(labelB)
-    scene.add(mass_springB);    
+    scene.add(mass_springB);
+   
+    
 
     window.addEventListener( 'resize', onWindowResize );
 }
@@ -302,17 +376,18 @@ function render() {
     
     const delta = clock.getDelta();
     const time = clock.getElapsedTime();
-    let omegaA = sqrt(paramsA.k/paramsA.m)
+   
     const lA = sprModelA.l
     const rA = massA.geometry.parameters.radius
-    sprModelA.spring.scale.y = (lA + cos(omegaA*time))/lA
-    massA.position.y = -(lA + rA + cos(omegaA*time))
+    let yA = ampA*cos(omegaA*time + phiA)
+    sprModelA.spring.scale.y = (lA + yA)/lA
+    massA.position.y = -(lA +  yA)
 
     const lB = sprModelB.l
     const rB = massB.geometry.parameters.radius    
-    let omegaB = sqrt(paramsB.k/paramsB.m)
-    sprModelB.spring.scale.y = (lB + cos(omegaB*time))/lB
-    massB.position.y = -(lB + rB + cos(omegaB*time))
+    let yB = ampB*cos(omegaB*time + phiB)
+    sprModelB.spring.scale.y = (lB + yB)/lB
+    massB.position.y = -(lB +  yB)
 
     renderer.render( scene, camera );
     labelRenderer.render( scene, camera );
