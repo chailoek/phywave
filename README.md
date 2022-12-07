@@ -1,1 +1,1 @@
-# phywave
+# phywave ฟิสิกส์ของคลื่น
