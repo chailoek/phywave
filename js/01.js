@@ -9,8 +9,8 @@ import { Line2 } from 'three/addons/lines/Line2.js';
 import GUI from './lib/lil-gui-0.17.js'
 import katex from 'katex'; 
 
-let sin = math.sin, cos = math.cos, pi = math.pi
-let sqrt = math.sqrt, atan = math.atan, round = math.round
+let sin = math.sin, cos = math.cos, pi = math.pi, pow = math.pow
+let sqrt = math.sqrt, atan2 = math.atan2, round = math.round
 let container, stats, clock;
 let camera, scene, renderer, labelRenderer;
 
@@ -18,20 +18,22 @@ let grid
 let sprModelA, massA
 let sprModelB, massB
 let mass_springA, mass_springB
+let divYAB
+let yMax = 3.75
 const paramsA = {
-    y0: 0,
+    y0: 1,
     v0: 0,
     k: 5.0,
     m: 1.0,
 }
 const paramsB = {
-    y0: 0,
+    y0: 1,
     v0: 0,
     k: 5.0,
     m: 1.0,
 }
-let omegaA = sqrt(paramsA.k/paramsA.m)
-let omegaB = sqrt(paramsB.k/paramsB.m)
+let omegaA = round(sqrt(paramsA.k/paramsA.m),3)
+let omegaB = round(sqrt(paramsB.k/paramsB.m),3)
 let ampA , ampB
 let phiA, phiB 
 
@@ -190,14 +192,14 @@ class VSpring {
 }
 function setInitilaValue(y0, v0, omega) {
     let m = [[1, 0], [0, omega]]
-    let AB = math.lusolve(m, [y0, v0]) 
-    let A = round(AB[0][0], 3), B = round(AB[1][0], 3)
-    let phi = atan(B/A)
+    let A12 = math.lusolve(m, [y0, v0]) 
+    let A1 = round(A12[0][0], 3), A2 = round(A12[1][0], 3)
+    let phi = atan2(A1,A2)
     let amp 
-    if (A == 0 && B == 0) return [0, 0]
-    if (A == 0) {amp = B/sin(phi); return [amp, phi];}
-    if (B == 0) {amp = A/cos(phi); return [amp, phi];}
-    amp = A/cos(phi)         
+    if (A1 == 0 && A2 == 0) return [0, 0]
+    if (A1 == 0) {amp = A2/cos(phi); return [amp, phi];}
+    if (A2 == 0) {amp = A1/sin(phi); return [amp, phi];}
+    amp = A1/sin(phi)         
     return [amp, phi];
 }
 
@@ -207,40 +209,33 @@ function setInitilaValue(y0, v0, omega) {
 init();
 animate();
 // render();
-stats.update();
+// stats.update();
+let label1 = scene.getObjectByName( "label1", true );
+let label2 = scene.getObjectByName( "label2", true );
+let label3 = scene.getObjectByName( "label3", true );
+let yMaxLine_ = scene.getObjectByName( "yMaxLine", true );
+
 function init() {
     const gui = new GUI()
 
     const folderA = gui.addFolder( 'A' );
     const folderB = gui.addFolder( 'B' );
-   
+    gui.add({disableLabel: function () {
+        label1.visible = label1.visible ? false : true        
+        label2.visible = label2.visible ? false : true        
+        label3.visible = label3.visible ? false : true        
+        yMaxLine_.visible = yMaxLine_.visible ? false : true        
+    }}, 'disableLabel').name("Toggle Infomation")
     let paramsALabel = {}
     paramsALabel.y0 = katex.renderToString("y_{0} \\quad (m)", { throwOnError: false}); 
     paramsALabel.v0 = katex.renderToString("v_{0} \\quad (m/s)", { throwOnError: false}); 
     paramsALabel.k = katex.renderToString("k \\quad (N/m)", { throwOnError: false}); 
     paramsALabel.m = katex.renderToString("m \\quad (kg)", { throwOnError: false}); 
 
-    folderA.add( paramsA, 'y0' )
-        .name(paramsALabel.y0)
-        .onChange( function( y0 ) {
-            [ampA, phiA] = setInitilaValue(paramsA.y0, paramsA.v0, omegaA);            
-        } )
-    folderA.add( paramsA, 'v0' )
-        .name(paramsALabel.v0)
-        .onChange( function( v0 ) {
-            [ampA, phiA] = setInitilaValue(paramsA.y0, paramsA.v0, omegaA);
-        } ); 	
-    folderA.add( paramsA, 'k' )
-        .name(paramsALabel.k)
-        .onChange( function( v0 ) {
-            omegaA = sqrt(paramsA.k/paramsA.m);
-        } ); 	
-    folderA.add( paramsA, 'm' )
-        .name(paramsALabel.m)
-        .onChange( function( v0 ) {
-            omegaA = sqrt(paramsA.k/paramsA.m);
-        } );  	
-    
+    folderA.add( paramsA, 'y0' ).name(paramsALabel.y0);        
+    folderA.add( paramsA, 'v0' ).name(paramsALabel.v0); 	
+    folderA.add( paramsA, 'k' ).name(paramsALabel.k); 	
+    folderA.add( paramsA, 'm' ).name(paramsALabel.m);    
     
     
     let paramsBLabel = {}
@@ -248,28 +243,20 @@ function init() {
     paramsBLabel.v0 = katex.renderToString("v_{0} \\quad (m/s)", { throwOnError: false}); 
     paramsBLabel.k = katex.renderToString("k \\quad (N/m)", { throwOnError: false}); 
     paramsBLabel.m = katex.renderToString("m \\quad (kg)", { throwOnError: false}); 
-    folderB.add( paramsB, 'y0' )
-        .name(paramsBLabel.y0)
-        .onChange( function( y0 ) {
-            [ampB, phiB] = setInitilaValue(paramsB.y0, paramsB.v0, omegaB);            
-        } ); 	
-    folderB.add( paramsB, 'v0' )
-        .name(paramsBLabel.v0)
-        .onChange( function( y0 ) {
-            [ampB, phiB] = setInitilaValue(paramsB.y0, paramsB.v0, omegaB);            
-        } ); 	
-    folderB.add( paramsB, 'k' )
-        .name(paramsBLabel.k)
-        .onChange( function( v0 ) {
-            omegaB = sqrt(paramsB.k/paramsB.m);
-        } );  	
-    folderB.add( paramsB, 'm' )
-        .name(paramsBLabel.m)
-        .onChange( function( v0 ) {
-            omegaB = sqrt(paramsB.k/paramsB.m);
-        } ); 
+    folderB.add( paramsB, 'y0' ).name(paramsBLabel.y0); 	
+    folderB.add( paramsB, 'v0' ).name(paramsBLabel.v0); 	
+    folderB.add( paramsB, 'k' ).name(paramsBLabel.k);  	
+    folderB.add( paramsB, 'm' ).name(paramsBLabel.m); 
 
-    
+    gui.onChange( (e) => {
+        [ampA, phiA] = setInitilaValue(paramsA.y0, paramsA.v0, omegaA);
+        [ampB, phiB] = setInitilaValue(paramsB.y0, paramsB.v0, omegaB);
+        omegaA = round(sqrt(paramsA.k/paramsA.m),3);
+        omegaB = round(sqrt(paramsB.k/paramsB.m),3);
+        if (ampA > yMax) alert("amplitude A > 3.75 m (y maximum)")
+        if (ampB > yMax) alert("amplitude B > 3.75 m (y maximum)")
+    })
+
     container = document.getElementById( 'container' );
     clock = new THREE.Clock();
 
@@ -277,20 +264,21 @@ function init() {
     scene.background = new THREE.Color( 0xf0f0f0 );
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 1, 4000 );
     camera.position.z = 10;
+    camera.position.y = -3;
     
     // grid = new THREE.GridHelper(11,10)
     // grid.rotateX(math.pi/2)
     // scene.add(grid)
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio( window.innerWidth/window.innerHeight);
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.outputEncoding = THREE.sRGBEncoding;
 
     container.appendChild( renderer.domElement );    
-    stats = new Stats();
-    container.appendChild( stats.dom );
+    // stats = new Stats();
+    // container.appendChild( stats.dom );
 
-    labelRenderer = new CSS2DRenderer();
+    labelRenderer = new CSS2DRenderer({ antialias: true });
     labelRenderer.setSize( window.innerWidth, window.innerHeight );
     labelRenderer.domElement.style.position = 'absolute';
     labelRenderer.domElement.style.top = '0px';
@@ -306,11 +294,44 @@ function init() {
     var material = new THREE.LineBasicMaterial({
         color: 0xf63954,  
     });
+    var material2 = new THREE.LineBasicMaterial({
+        color: 0x0000ff,  
+    });
+    const diveqliLine = document.createElement( 'div' );
+    katex.render("y = 0", diveqliLine,{ throwOnError: false});
+    diveqliLine.className = 'label';
+    diveqliLine.style.marginTop = '-1em';
+    const labelEqliLine = new CSS2DObject( diveqliLine );
+    labelEqliLine.name = "label1"
+
+    const divyMaxLine = document.createElement( 'div' );
+    katex.render(`y_{max} = ${yMax} \\> m`, divyMaxLine,{ throwOnError: false});
+    divyMaxLine.className = 'label';
+    divyMaxLine.style.marginTop = '-1em';
+    const labelyMaxLine = new CSS2DObject( divyMaxLine );
+    labelyMaxLine.name = "label2"
+
     const eqliLine = new THREE.Line(geo,material)
     const fixedLine = new THREE.Line(geo,material)
-    fixedLine.translateY(4)
-    scene.add(eqliLine, fixedLine)
+    const yMaxLine = new THREE.Line(geo,material2)
+    yMaxLine.name = "yMaxLine"
 
+    eqliLine.add(labelEqliLine)
+    yMaxLine.add(labelyMaxLine)    
+    labelEqliLine.position.set(-3,-0.4,0)
+    labelyMaxLine.position.set(-4,-0.4,0)
+
+    fixedLine.translateY(4)
+    yMaxLine.translateY(3.75)
+    scene.add(eqliLine, fixedLine, yMaxLine)
+    
+    divYAB = document.createElement( 'div' );    
+    divYAB.className = 'label';
+    divYAB.style.marginTop = '-1em';
+    const labelYAB = new CSS2DObject( divYAB );
+    labelYAB.name = "label3"
+    labelYAB.position.set(0,-3,0)
+    scene.add(labelYAB)
     const circleGeo = new THREE.CircleGeometry( 0.25, 32);
     const mat = new THREE.MeshBasicMaterial( { color: 0x000000 } );
 
@@ -360,16 +381,16 @@ function onWindowResize() {
     renderer.setSize( window.innerWidth, window.innerHeight );
     labelRenderer.setSize( window.innerWidth, window.innerHeight );
     render();
-    stats.update();
+    // stats.update();
 
 }
 
 function animate() {
 
-    requestAnimationFrame( animate );
+    requestAnimationFrame( animate );    
     render();
-    stats.update();
-
+    // stats.update();
+    
 }
 
 function render() {    
@@ -379,15 +400,39 @@ function render() {
    
     const lA = sprModelA.l
     const rA = massA.geometry.parameters.radius
-    let yA = ampA*cos(omegaA*time + phiA)
+    let yA = ampA*sin(omegaA*time - phiA)
     sprModelA.spring.scale.y = (lA + yA)/lA
     massA.position.y = -(lA +  yA)
 
     const lB = sprModelB.l
     const rB = massB.geometry.parameters.radius    
-    let yB = ampB*cos(omegaB*time + phiB)
+    let yB = ampB*sin(omegaB*time - phiB)
     sprModelB.spring.scale.y = (lB + yB)/lB
     massB.position.y = -(lB +  yB)
+    let ampAR = round(ampA,2)
+    let ampBR = round(ampB,2)
+    let phiAR = round(phiA,2)
+    let phiBR = round(phiB,2)
+    let omegaAR = round(omegaA,2)
+    let omegaBR = round(omegaB,2)
+    let fA = round(omegaA/(2*pi),3)
+    let fB = round(omegaB/(2*pi),3)
+    let t = round(time,3)
+    let deltaPhi = round((phiA - phiB),2)
+    let deltaPhiD = round((phiA - phiB)*180/pi,2)
+    let UA = 0.5*paramsA.k*pow(paramsA.y0,2), TA = 0.5*paramsA.m*pow(paramsA.v0,2)
+    let UB = 0.5*paramsB.k*pow(paramsB.y0,2), TB = 0.5*paramsB.m*pow(paramsB.v0,2)
+    let EA = round(UA + TA,2) 
+    let EB = round(UB + TB,2)
+
+    katex.render(`
+        y = Asin(\\omega t + \\phi) \\quad \\omega = 2 \\pi f \\\\
+        y_{A} = ${ampAR}sin(${omegaAR}t + ${phiAR}) \\quad m\\\\
+        y_{B} = ${ampBR}sin(${omegaBR}t + ${phiBR}) \\quad m \\\\
+        f_{A} = ${fA} \\quad f_{B} = ${fB} \\quad Hz \\\\
+        \\phi_{A} - \\phi_{B} = ${deltaPhi} \\> rad \\quad (${deltaPhiD} \\degree) \\\\
+        E_{A} = ${EA} \\quad E_{B} = ${EB} \\> J
+    `, divYAB,{ throwOnError: false});
 
     renderer.render( scene, camera );
     labelRenderer.render( scene, camera );
