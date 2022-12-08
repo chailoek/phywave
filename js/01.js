@@ -298,14 +298,14 @@ function init() {
         color: 0x0000ff,  
     });
     const diveqliLine = document.createElement( 'div' );
-    katex.render("y = 0", diveqliLine,{ throwOnError: false});
+    katex.render("\\tt 0 \\> m", diveqliLine,{ throwOnError: false});
     diveqliLine.className = 'label';
     diveqliLine.style.marginTop = '-1em';
     const labelEqliLine = new CSS2DObject( diveqliLine );
     labelEqliLine.name = "label1"
 
     const divyMaxLine = document.createElement( 'div' );
-    katex.render(`y_{max} = ${yMax} \\> m`, divyMaxLine,{ throwOnError: false});
+    katex.render(`\\tt ${yMax} \\> m`, divyMaxLine,{ throwOnError: false});
     divyMaxLine.className = 'label';
     divyMaxLine.style.marginTop = '-1em';
     const labelyMaxLine = new CSS2DObject( divyMaxLine );
@@ -318,8 +318,8 @@ function init() {
 
     eqliLine.add(labelEqliLine)
     yMaxLine.add(labelyMaxLine)    
-    labelEqliLine.position.set(-2,-0.3,0)
-    labelyMaxLine.position.set(-2.5,-0.3,0)
+    labelEqliLine.position.set(-2.5,-0.4,0)
+    labelyMaxLine.position.set(-2,-0.25,0)
 
     fixedLine.translateY(4)
     yMaxLine.translateY(3.75)
@@ -330,7 +330,7 @@ function init() {
     divYAB.style.marginTop = '-1em';
     const labelYAB = new CSS2DObject( divYAB );
     labelYAB.name = "label3"
-    labelYAB.position.set(0,-2,0)
+    labelYAB.position.set(0,-4,0)
     scene.add(labelYAB)
     const circleGeo = new THREE.CircleGeometry( 0.25, 32);
     const mat = new THREE.MeshBasicMaterial( { color: 0x000000 } );
