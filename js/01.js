@@ -318,8 +318,8 @@ function init() {
 
     eqliLine.add(labelEqliLine)
     yMaxLine.add(labelyMaxLine)    
-    labelEqliLine.position.set(-3,-0.4,0)
-    labelyMaxLine.position.set(-4,-0.4,0)
+    labelEqliLine.position.set(-2,-0.3,0)
+    labelyMaxLine.position.set(-2.5,-0.3,0)
 
     fixedLine.translateY(4)
     yMaxLine.translateY(3.75)
@@ -330,7 +330,7 @@ function init() {
     divYAB.style.marginTop = '-1em';
     const labelYAB = new CSS2DObject( divYAB );
     labelYAB.name = "label3"
-    labelYAB.position.set(0,-3,0)
+    labelYAB.position.set(0,-2,0)
     scene.add(labelYAB)
     const circleGeo = new THREE.CircleGeometry( 0.25, 32);
     const mat = new THREE.MeshBasicMaterial( { color: 0x000000 } );
