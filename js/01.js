@@ -18,8 +18,11 @@ let grid
 let sprModelA, massA
 let sprModelB, massB
 let mass_springA, mass_springB
-let divYAB
+let divYAB, divt
 let yMax = 3.75
+let initialValueChanging = true, t = 0, pause = false
+
+
 const paramsA = {
     y0: 1,
     v0: 0,
@@ -191,15 +194,15 @@ class VSpring {
     }
 }
 function setInitilaValue(y0, v0, omega) {
-    let m = [[1, 0], [0, omega]]
-    let A12 = math.lusolve(m, [y0, v0]) 
-    let A1 = round(A12[0][0], 3), A2 = round(A12[1][0], 3)
-    let phi = atan2(A1,A2)
-    let amp 
+    let m = [[1, 0], [0, omega]];
+    let A12 = math.lusolve(m, [y0, v0]);
+    let A1 = round(A12[0][0], 3), A2 = round(A12[1][0], 3);
+    let phi = atan2(A1,A2);
+    let amp; 
     if (A1 == 0 && A2 == 0) return [0, 0]
     if (A1 == 0) {amp = A2/cos(phi); return [amp, phi];}
     if (A2 == 0) {amp = A1/sin(phi); return [amp, phi];}
-    amp = A1/sin(phi)         
+    amp = A1/sin(phi);         
     return [amp, phi];
 }
 
@@ -220,12 +223,37 @@ function init() {
 
     const folderA = gui.addFolder( 'A' );
     const folderB = gui.addFolder( 'B' );
+    let toggleStartPauseCurName = "Start";
+    let toggleStartPause = gui.add({start:  () => {
+        switch (toggleStartPauseCurName) {
+            case "Start":
+                initialValueChanging = false;
+                toggleStartPause.name("Pause");
+                toggleStartPauseCurName = "Pause";
+                break;
+            case "Pause":
+                pause = true;
+                toggleStartPause.name("Continue");
+                toggleStartPauseCurName = "Continue";
+                break;
+            case "Continue":
+                pause = false;
+                toggleStartPause.name("Pause");
+                toggleStartPauseCurName = "Pause";
+                break;
+            default:
+                break;
+        }
+    }}, 'start').name("Start")
+
     gui.add({disableLabel: function () {
         label1.visible = label1.visible ? false : true        
         label2.visible = label2.visible ? false : true        
         label3.visible = label3.visible ? false : true        
         yMaxLine_.visible = yMaxLine_.visible ? false : true        
     }}, 'disableLabel').name("Toggle Infomation")
+    
+    
     let paramsALabel = {}
     paramsALabel.y0 = katex.renderToString("y_{0} \\quad (m)", { throwOnError: false}); 
     paramsALabel.v0 = katex.renderToString("v_{0} \\quad (m/s)", { throwOnError: false}); 
@@ -249,6 +277,11 @@ function init() {
     folderB.add( paramsB, 'm' ).name(paramsBLabel.m); 
 
     gui.onChange( (e) => {
+        initialValueChanging = true; t = 0;
+        pause = false;        
+        toggleStartPause.name("Start");
+        toggleStartPauseCurName = "Start";
+
         [ampA, phiA] = setInitilaValue(paramsA.y0, paramsA.v0, omegaA);
         [ampB, phiB] = setInitilaValue(paramsB.y0, paramsB.v0, omegaB);
         omegaA = round(sqrt(paramsA.k/paramsA.m),3);
@@ -297,6 +330,14 @@ function init() {
     var material2 = new THREE.LineBasicMaterial({
         color: 0x0000ff,  
     });
+    divt = document.createElement( 'div' );    
+    divt.className = 'label';
+    divt.style.marginTop = '-1em';
+    const labelt = new CSS2DObject( divt );
+    labelt.position.set(-3,2,0)
+    scene.add(labelt);
+
+
     const diveqliLine = document.createElement( 'div' );
     // katex.render("\\tt 0 \\> m", diveqliLine,{ throwOnError: false});
     diveqliLine.textContent = '0 m';
@@ -402,15 +443,28 @@ function render() {
    
     const lA = sprModelA.l
     const rA = massA.geometry.parameters.radius
-    let yA = ampA*sin(omegaA*time + phiA)
-    sprModelA.spring.scale.y = (lA + yA)/lA
-    massA.position.y = -(lA +  yA)
+    let yA, yB, tr
+    if (initialValueChanging) {        
+        yA = paramsA.y0;
+        yB = paramsB.y0;        
+    }
+    else {        
+        yA = ampA*sin(omegaA*t + phiA);
+        yB = ampB*sin(omegaB*t + phiB);
+        if (!pause) t += delta;        
+    }
 
+    tr = round(t,4);       
+    katex.render(`t = ${tr.toFixed(2)} \\> s`, divt,{ throwOnError: false});
+    // divt.textContent = `t = ${tr.toFixed(2)} s`;
     const lB = sprModelB.l
     const rB = massB.geometry.parameters.radius    
-    let yB = ampB*sin(omegaB*time + phiB)
-    sprModelB.spring.scale.y = (lB + yB)/lB
-    massB.position.y = -(lB +  yB)
+    
+    sprModelA.spring.scale.y = (lA - yA)/lA
+    massA.position.y = -lA +  yA
+    sprModelB.spring.scale.y = (lB - yB)/lB
+    massB.position.y = -lB +  yB
+
     let ampAR = round(ampA,2)
     let ampBR = round(ampB,2)
     let phiAR = round(phiA,2)
@@ -420,8 +474,7 @@ function render() {
     let fA = round(omegaA/(2*pi),3)
     let fB = round(omegaB/(2*pi),3)
     let periodA = round((2*pi)/omegaA,3)
-    let periodB = round((2*pi)/omegaB,3)
-    let t = round(time,3)
+    let periodB = round((2*pi)/omegaB,3)    
     let deltaPhi = round((phiA - phiB),2)
     let deltaPhiD = round((phiA - phiB)*180/pi,2)
     let UA = 0.5*paramsA.k*pow(paramsA.y0,2), TA = 0.5*paramsA.m*pow(paramsA.v0,2)
