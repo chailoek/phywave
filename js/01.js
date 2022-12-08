@@ -402,13 +402,13 @@ function render() {
    
     const lA = sprModelA.l
     const rA = massA.geometry.parameters.radius
-    let yA = ampA*sin(omegaA*time - phiA)
+    let yA = ampA*sin(omegaA*time + phiA)
     sprModelA.spring.scale.y = (lA + yA)/lA
     massA.position.y = -(lA +  yA)
 
     const lB = sprModelB.l
     const rB = massB.geometry.parameters.radius    
-    let yB = ampB*sin(omegaB*time - phiB)
+    let yB = ampB*sin(omegaB*time + phiB)
     sprModelB.spring.scale.y = (lB + yB)/lB
     massB.position.y = -(lB +  yB)
     let ampAR = round(ampA,2)
@@ -419,6 +419,8 @@ function render() {
     let omegaBR = round(omegaB,2)
     let fA = round(omegaA/(2*pi),3)
     let fB = round(omegaB/(2*pi),3)
+    let periodA = round((2*pi)/omegaA,3)
+    let periodB = round((2*pi)/omegaB,3)
     let t = round(time,3)
     let deltaPhi = round((phiA - phiB),2)
     let deltaPhiD = round((phiA - phiB)*180/pi,2)
@@ -428,10 +430,11 @@ function render() {
     let EB = round(UB + TB,2)
 
     katex.render(`
-        y = Asin(\\omega t + \\phi) \\quad \\omega = 2 \\pi f \\\\
+        y = Asin(\\omega t + \\phi) \\quad \\omega = 2 \\pi f = 2 \\pi / T\\\\
         y_{A} = ${ampAR}sin(${omegaAR}t + ${phiAR}) \\quad m\\\\
         y_{B} = ${ampBR}sin(${omegaBR}t + ${phiBR}) \\quad m \\\\
         f_{A} = ${fA} \\quad f_{B} = ${fB} \\quad Hz \\\\
+        T_{A} = ${periodA} \\quad T_{B} = ${periodB} \\quad Sec \\\\
         \\phi_{A} - \\phi_{B} = ${deltaPhi} \\> rad \\quad (${deltaPhiD} \\degree) \\\\
         E_{A} = ${EA} \\quad E_{B} = ${EB} \\> J
     `, divYAB,{ throwOnError: false});
