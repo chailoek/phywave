@@ -298,14 +298,16 @@ function init() {
         color: 0x0000ff,  
     });
     const diveqliLine = document.createElement( 'div' );
-    katex.render("\\tt 0 \\> m", diveqliLine,{ throwOnError: false});
+    // katex.render("\\tt 0 \\> m", diveqliLine,{ throwOnError: false});
+    diveqliLine.textContent = '0 m';
     diveqliLine.className = 'label';
     diveqliLine.style.marginTop = '-1em';
     const labelEqliLine = new CSS2DObject( diveqliLine );
     labelEqliLine.name = "label1"
 
     const divyMaxLine = document.createElement( 'div' );
-    katex.render(`\\tt ${yMax} \\> m`, divyMaxLine,{ throwOnError: false});
+    // katex.render(`\\tt ${yMax} \\> m`, divyMaxLine,{ throwOnError: false});
+    divyMaxLine.textContent = "3.75 m"
     divyMaxLine.className = 'label';
     divyMaxLine.style.marginTop = '-1em';
     const labelyMaxLine = new CSS2DObject( divyMaxLine );
@@ -318,8 +320,8 @@ function init() {
 
     eqliLine.add(labelEqliLine)
     yMaxLine.add(labelyMaxLine)    
-    labelEqliLine.position.set(-2.5,-0.4,0)
-    labelyMaxLine.position.set(-2,-0.25,0)
+    labelEqliLine.position.set(-3,0.0,0)
+    labelyMaxLine.position.set(-3,-0.25,0)
 
     fixedLine.translateY(4)
     yMaxLine.translateY(3.75)
