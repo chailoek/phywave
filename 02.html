@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mass Spring Oscillation</title>  
+  <link rel="stylesheet" href="css/main.css">  
+  <script src="js/lib/math.js" ></script> 
+
+  <link rel="stylesheet" href="js/lib/katex.min.css">
+  <script defer src="js/lib/katex.js" ></script>  
+  <script defer src="js/lib/contrib/auto-render.js" 
+    onload="renderMathInElement(document.body);"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+  </script>  
+  <script type="importmap">
+    {
+      "imports": {
+        "lil_gui": "./js/lib/lil-gui-0.17.js",
+        "katex": "./js/lib/katex.mjs"
+      }
+    }
+  </script>  
+  <script  type="module" src="js/02.js" ></script> 
+</head>
+
+<body>
+    
+  <div class="container">
+    <div id="nav_bar" class="nav_bar">
+      <dev id="setting">    
+        <a href="#">
+          <svg width="30" hight="30">
+            <path d="M0,5 30,5" stroke="#000" stroke-width="5"/>
+            <path d="M0,14 30,14" stroke="#000" stroke-width="5"/>
+            <path d="M0,23 30,23" stroke="#000" stroke-width="5"/>
+          </svg>
+        </a>    
+      </dev>     
+      <div class="start_reset">    
+        <button id="spcToggle" >Start</button>
+        <button id="reset" >Reset</button>
+      </div>
+    </div>
+    <div id="time">
+      <p>time</p>
+    </div>  
+    <div id="gui_container" class="gui_container">   
+      <div id="gui" class="gui"></div>
+      <div id="infoA"></div>
+      <div id="infoB"></div>
+    </div>   
+    <div id="mass_spring">
+      <canvas id="myCanvas" width="200" height="740"></canvas>
+    </div>
+  
+  </div>  
+</body>
+
+</html>

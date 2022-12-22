@@ -1,1 +1,4 @@
 **/threejs-cookbook/**
+node_modules/**
+package-lock.json
+learnCss/**
