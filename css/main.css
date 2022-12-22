@@ -75,5 +75,11 @@ a {
     padding: 0.5em;
 }
 
-#infoA  { padding: 0.25em; } 
-#infoB  { padding: 0.25em; } 
+#infoA  { 
+    padding: 0.25em;
+    width: var(--gui_width);
+ } 
+#infoB  { 
+    padding: 0.25em; 
+    width: var(--gui_width);
+} 
